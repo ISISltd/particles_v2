@@ -5,6 +5,9 @@
 #include "gnuplot_i.hpp"
 #include <iostream>
 #include <memory>
+
+#define _USE_MATH_DEFINES
+
 #include "math.h"
 #include <list>
 #include <stdio.h>
@@ -21,7 +24,7 @@
 //double m_PI = 3.1415;
 double m = 2;// 91 * 1.66e-27;
 double m_e = 2;// 9.109e-28;// mass
-double dpi = 6.2830;
+double dpi = 2*M_PI;
 double k = 1;// 1.380648813e-23;
 double T = 1;// 3600;
 double q1 = 1;// (1.6e-23);
@@ -29,7 +32,6 @@ double q2 = 2;// *(1.6e-23);
 double q3 = 4;// *(1.6e-23);
 double kc = 1;//(1./(4*M_PI*8.8554187817e-12));
 
-double M_PI = 3.1415;
 
 /***********************************/
 int CP = 10;//count of particles		
