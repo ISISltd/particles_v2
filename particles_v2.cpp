@@ -215,9 +215,9 @@ int main()
 		_q[gg] = q;
 		inR_vect[gg] = GenerateR(10.2, 10.5);//Height Lenght
 		inV_vect[gg] = GenerateRM(k*T);
-		if (gg>400)
+		if (gg>80)
 			q = q2;
-		if (gg > 800)
+		if (gg > 120)
 			q = q3;
 	}
 
