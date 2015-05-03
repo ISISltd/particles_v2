@@ -34,8 +34,8 @@ double kc = (1./(4*M_PI*(8.8554187817e-12)));
 
 
 /***********************************/
-int CP = 1;//count of particles		
-int N = 2000;//time steps
+int CP = 1000;//count of particles		
+int N = 1000;//time steps
 //double critical_rad = 110.8;
 /***********************************/
 
@@ -197,21 +197,20 @@ int main()
 	FoutRx.open("outRx1.txt");
 	std::ofstream FoutVx;
 	FoutVx.open("outVx1.txt");
-
-	double _q[CP];
-	double U = 10000;
-	int mn;
-	double dT = 0.001;
-
 	std::vector<vec3d> inR_vect(CP);
 	std::vector<vec3d> outR_vect(CP);
 	std::vector<vec3d> inV_vect(CP);
 	std::vector<vec3d> outV_vect(CP);
 	std::vector<vec3d> p_frc(CP);
 
-	vec3d B(1, 0, 0);
-	vec3d E(0, 0, 0.1);
-	double L = 111110.1;//10 cm
+	double _q[CP];
+	double U = 10000;
+	int mn;
+	double dT = 0.00000001;
+
+	vec3d B(0.0001, 0, 0);
+	vec3d E(0, 0, 100000);
+	double L = 0.1;//10 cm
 
 	
 	// generate beam
@@ -248,22 +247,24 @@ int main()
 			{
 				if (p != gg2) 
 				{
-			//		temp = temp + CuloPower(outR_vect[gg2], outR_vect[p], _q[p] * _q[gg2]);
+					temp = temp + CuloPower(outR_vect[gg2], outR_vect[p], _q[p] * _q[gg2]);
 				}
 			}
-			if (outR_vect[gg2].z <=L) // electric field
+
+			if (outR_vect[gg2].z <= L) // electric field
 			{
-				p_frc[gg2] = temp + (_q[gg2]) * E;
-				outR_vect[gg2] = outR_vect[gg2] + (dT * outV_vect[gg2]) + (1. / m) *(dT*dT / 2)*(p_frc[gg2]);
+				p_frc[gg2] = temp + ((_q[gg2]) * E);
 				outV_vect[gg2] = outV_vect[gg2] + (1. / m)*dT*p_frc[gg2];
+				outR_vect[gg2] = outR_vect[gg2] + (dT * outV_vect[gg2]);// +(1. / m) *(dT*dT / 2)*(p_frc[gg2]);
+				
 
-				FinRx << outR_vect[gg2].x << " ";
-				FinRx << outR_vect[gg2].y << " ";
-				FinRx << outR_vect[gg2].z << "\n";
+				//FinRx << outR_vect[gg2].x << " ";
+				//FinRx << outR_vect[gg2].y << " ";
+			   // FinRx << outR_vect[gg2].z << "\n";
 
-				//FinVx << outV_vect[gg2].x << " ";
-				//FinVx << outV_vect[gg2].y << " ";
-				//FinVx << outV_vect[gg2].z << "\n";
+				FinVx << outV_vect[gg2].x << " ";
+				FinVx << outV_vect[gg2].y << " ";
+				FinVx << outV_vect[gg2].z << "\n";
 
 				if (i == N - 1)
 				{
@@ -272,11 +273,12 @@ int main()
 			}
 
 			// magnetic field
-			if (outR_vect[gg2].z > L)
+			if ((outR_vect[gg2].z) > L)
 			{
 				p_frc[gg2] = temp + _q[gg2] * (outV_vect[gg2] % B);
-				outR_vect[gg2] = outR_vect[gg2] + (dT * outV_vect[gg2]) + (1. / m) * (dT*dT/2)*( p_frc[gg2]);
 				outV_vect[gg2] = outV_vect[gg2] + (1. / m) * (dT * p_frc[gg2]);
+				outR_vect[gg2] = outR_vect[gg2] + (dT * outV_vect[gg2]);// +(1. / m) * (dT*dT / 2)*(p_frc[gg2]);
+				
 
 
 				//				FinRx << inV_vect[gg2].x / inV_vect[gg2].z << " ";
@@ -287,13 +289,13 @@ int main()
 				//				FinVx << inV_vect[gg2].y << " ";
 				//				FinVx << inV_vect[gg2].z << "\n";
 
-				FinRx << outR_vect[gg2].x << " ";
-				FinRx << outR_vect[gg2].y << " ";
-				FinRx << outR_vect[gg2].z << "\n";
+				//FinRx << outR_vect[gg2].x << " ";
+				//FinRx << outR_vect[gg2].y << " ";
+				//FinRx << outR_vect[gg2].z << "\n";
 
-			//	FinVx << outV_vect[gg2].x << " ";
-			//	FinVx << outV_vect[gg2].y << " ";
-			//	FinVx << outV_vect[gg2].z << "\n";
+				FinVx << outV_vect[gg2].x << " ";
+		    	FinVx << outV_vect[gg2].y << " ";
+				FinVx << outV_vect[gg2].z << "\n";
 			}
 
 		}
@@ -311,11 +313,17 @@ int main()
 	FinVx.close();
 	FoutRx.close();
 	FoutVx.close();
-	//Gnuplot gp1;
-	//gp1.cmd("splot 'inRx1.txt' with dots");
+	Gnuplot gp1;
+	gp1.cmd( "set xrange[0:30]");
+	gp1.cmd("set yrange[0:30]");
+	gp1.cmd("set zrange[0:30]");
+	gp1.cmd("splot 'inRx1.txt' with dots");
 
-//	Gnuplot gp2;
-	//gp2.cmd("splot 'outRx1.txt' with dots");
+	Gnuplot gp2;
+	//gp2.cmd("set xrange[0:30]");
+	//gp2.cmd("set yrange[0:30]");
+	//gp2.cmd("set zrange[0:30]");
+	gp2.cmd("splot 'outRx1.txt' with dots");
 
 	//Gnuplot gp3;
 	//gp3.cmd("splot 'inVx1.txt' with dots");
