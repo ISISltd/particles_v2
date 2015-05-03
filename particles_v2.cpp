@@ -27,15 +27,15 @@ double m = 4* 1.66e-27;
 double dpi = 2*M_PI;
 double k =  1.380648813e-23;
 double T =  3600;
-double q1 = -(1.6e-19);
-double q2 =- 2 *(1.6e-19);
-double q3 =- 4 *(1.6e-19);
+double q1 = (1.6e-19);
+double q2 = 2 *(1.6e-19);
+double q3 = 4 *(1.6e-19);
 double kc = (1./(4*M_PI*(8.8554187817e-12)));
 
 
 /***********************************/
-int CP = 100;//count of particles		
-int N = 1000;//time steps
+int CP = 1;//count of particles		
+int N = 2000;//time steps
 //double critical_rad = 110.8;
 /***********************************/
 
@@ -201,7 +201,7 @@ int main()
 	double _q[CP];
 	double U = 10000;
 	int mn;
-	double dT = 0.00001;
+	double dT = 0.001;
 
 	std::vector<vec3d> inR_vect(CP);
 	std::vector<vec3d> outR_vect(CP);
@@ -210,22 +210,20 @@ int main()
 	std::vector<vec3d> p_frc(CP);
 
 	vec3d B(1, 0, 0);
-	vec3d E(0, 0, 1);
-	double L = 0.1;//10 cm
+	vec3d E(0, 0, 0.1);
+	double L = 111110.1;//10 cm
 
 	
 	// generate beam
 	for (int gg = 0; gg < CP; gg++)
 	{
-		 //double q = 1;
 		_q[gg] = q1;
 		inR_vect[gg] = GenerateR(0.02, 0.05);//Height Lenght
 		inV_vect[gg] = GenerateRM(1*k*T);
-		/*if (gg>80)
+		if (gg>80)
 			_q[gg] = q2;
 		if (gg > 120)
-			_q[gg] = q3;*/
-
+			_q[gg] = q3;
 
 		//FinRx << inR_vect[gg].x << " ";
 		//FinRx << inR_vect[gg].y << " ";
@@ -238,15 +236,14 @@ int main()
 		outR_vect[gg_gg] = inR_vect[gg_gg];
 	}
 
-
 	//calc particles
 	
 	for (int i = 0; i < N; i++)
 	{
 		std::cout << i << '\n';
-		vec3d temp(0, 0, 0);
-		for (int gg2 = 0; gg2 < CP; gg2++) {
-
+		for (int gg2 = 0; gg2 < CP; gg2++) 
+		{
+			vec3d temp(0, 0, 0);
 			for (int p = 0; p < CP; p++) 
 			{
 				if (p != gg2) 
@@ -254,13 +251,11 @@ int main()
 			//		temp = temp + CuloPower(outR_vect[gg2], outR_vect[p], _q[p] * _q[gg2]);
 				}
 			}
-			//vec3d ez(0, 0, 1);
-			if (outR_vect[gg2].z < L) // electric field
+			if (outR_vect[gg2].z <=L) // electric field
 			{
-				p_frc[gg2] = temp + (_q[gg2] / L) * E;
-				//outV_vect[gg2] = outV_vect[gg2] + (1./m)*dT*p_frc[gg2];//////
+				p_frc[gg2] = temp + (_q[gg2]) * E;
 				outR_vect[gg2] = outR_vect[gg2] + (dT * outV_vect[gg2]) + (1. / m) *(dT*dT / 2)*(p_frc[gg2]);
-				outV_vect[gg2] = outV_vect[gg2] + (1. / m)*dT*p_frc[gg2];//////
+				outV_vect[gg2] = outV_vect[gg2] + (1. / m)*dT*p_frc[gg2];
 
 				FinRx << outR_vect[gg2].x << " ";
 				FinRx << outR_vect[gg2].y << " ";
@@ -270,20 +265,19 @@ int main()
 				//FinVx << outV_vect[gg2].y << " ";
 				//FinVx << outV_vect[gg2].z << "\n";
 
+				if (i == N - 1)
+				{
 
+				}
 			}
 
 			// magnetic field
-			if (outR_vect[gg2].z >= L)
+			if (outR_vect[gg2].z > L)
 			{
 				p_frc[gg2] = temp + _q[gg2] * (outV_vect[gg2] % B);
-				//outV_vect[gg2] = outV_vect[gg2] + (1. / m) * (dT * p_frc[gg2]);
 				outR_vect[gg2] = outR_vect[gg2] + (dT * outV_vect[gg2]) + (1. / m) * (dT*dT/2)*( p_frc[gg2]);
 				outV_vect[gg2] = outV_vect[gg2] + (1. / m) * (dT * p_frc[gg2]);
 
-				/*FinRx << inR_vect[gg2].x << " ";
-				FinRx << inR_vect[gg2].y << " ";
-				FinRx << inR_vect[gg2].z << "\n";*/
 
 				//				FinRx << inV_vect[gg2].x / inV_vect[gg2].z << " ";
 				//				FinRx << inR_vect[gg2].y << " ";
@@ -293,9 +287,9 @@ int main()
 				//				FinVx << inV_vect[gg2].y << " ";
 				//				FinVx << inV_vect[gg2].z << "\n";
 
-			//	FinRx << outR_vect[gg2].x << " ";
-			//	FinRx << outR_vect[gg2].y << " ";
-			//	FinRx << outR_vect[gg2].z << "\n";
+				FinRx << outR_vect[gg2].x << " ";
+				FinRx << outR_vect[gg2].y << " ";
+				FinRx << outR_vect[gg2].z << "\n";
 
 			//	FinVx << outV_vect[gg2].x << " ";
 			//	FinVx << outV_vect[gg2].y << " ";
@@ -304,24 +298,24 @@ int main()
 
 		}
 	}
+	
 
-
-	//for (int gg22 = 0; gg22 < CP; gg22++)
+	for (int gg22 = 0; gg22 < CP; gg22++)
 	{
-	//	FoutRx << outR_vect[gg22].x << " ";
-	//	FoutRx << outR_vect[gg22].y << " ";
-	//	FoutRx << outR_vect[gg22].z << "\n";
+		FoutRx << outR_vect[gg22].x << " ";
+		FoutRx << outR_vect[gg22].y << " ";
+		FoutRx << outR_vect[gg22].z << "\n";
 	}
 
 	FinRx.close();
 	FinVx.close();
 	FoutRx.close();
 	FoutVx.close();
-	Gnuplot gp1;
-	gp1.cmd("splot 'inRx1.txt' with dots");
+	//Gnuplot gp1;
+	//gp1.cmd("splot 'inRx1.txt' with dots");
 
-	Gnuplot gp2;
-	gp2.cmd("splot 'outRx1.txt' with dots");
+//	Gnuplot gp2;
+	//gp2.cmd("splot 'outRx1.txt' with dots");
 
 	//Gnuplot gp3;
 	//gp3.cmd("splot 'inVx1.txt' with dots");
