@@ -22,20 +22,23 @@
 
 
 //double m_PI = 3.1415;
-double m = 4* 1.66e-27;
+double m = 2* 1.66e-27;
 //double m_e =  9.109e-28;// mass
 double dpi = 2*M_PI;
-double k =  1.380648813e-23;
+double k = 0.00001;// 1.380648813e-23;
 double T =  3600;
-double q1 = (1.6e-19);
+double q1 = 1*(1.6e-19);
 double q2 = 2 *(1.6e-19);
 double q3 = 4 *(1.6e-19);
 double kc = (1./(4*M_PI*(8.8554187817e-12)));
 
-
+double tangens30 = 1 / sqrt(3);
 /***********************************/
-int CP = 1000;//count of particles		
-int N = 1000;//time steps
+int CP = 500;//count of particles		
+int N = 15000;//time steps
+double L = 0.1;//10 cm
+double R0 = 0.33; // 33 cm
+double Width = 0.015;//1.5 cm
 //double critical_rad = 110.8;
 /***********************************/
 
@@ -187,6 +190,22 @@ vec3d CuloPower(vec3d p1, vec3d p2, double QQ)
 }
 
 
+double intersection(double inputZ)
+{
+	double temp = (-tangens30*(inputZ - L) + R0);
+	return temp;
+}
+double intersection_INPUT(double inputZ)
+{
+	double temp = (-tangens30*(inputZ - L) + R0);
+	return temp;
+}
+double PIFAGOR(double z,double y)
+{
+	double temp = sqrt(z*z+y*y) ;
+	return temp;
+}
+
 int main()
 {
 	std::ofstream FinRx;
@@ -204,44 +223,79 @@ int main()
 	std::vector<vec3d> p_frc(CP);
 
 	double _q[CP];
+	double _m[CP];
 	double U = 10000;
 	int mn;
-	double dT = 0.00000001;
+	double dT = 0.00000001;//10e-8
 
-	vec3d B(0.0001, 0, 0);
+	       dT = 0.000000001;
+
+	vec3d B(0.0811, 0, 0);
 	vec3d E(0, 0, 100000);
-	double L = 0.1;//10 cm
-
+	//double L = 0.1;//10 cm
+	bool leftE[CP];
 	
 	// generate beam
 	for (int gg = 0; gg < CP; gg++)
 	{
 		_q[gg] = q1;
-		inR_vect[gg] = GenerateR(0.02, 0.05);//Height Lenght
+		_m[gg] = m;
+		inR_vect[gg] = GenerateR(0.0075, 0.03);//Height Lenght
 		inV_vect[gg] = GenerateRM(1*k*T);
-		if (gg>80)
+		if (gg>500)
 			_q[gg] = q2;
-		if (gg > 120)
+		_m[gg] = 2*m;
+		if (gg>8000)
 			_q[gg] = q3;
+		_m[gg] = m;
+		if (gg>10000)
+			_q[gg] = 2*q1;
+		_m[gg] = 3*m;
+		
+		
+		
 
-		//FinRx << inR_vect[gg].x << " ";
-		//FinRx << inR_vect[gg].y << " ";
-		//FinRx << inR_vect[gg].z << "\n";
+		/*FinRx << inV_vect[gg].x << " ";
+	    FinRx << inV_vect[gg].y << " ";
+		FinRx << inV_vect[gg].z << "\n";
+
+		FoutRx << inR_vect[gg].x << " ";
+		FoutRx << inR_vect[gg].y << " ";
+		FoutRx << inR_vect[gg].z << "\n";*/
 	}
-
+	
 	for (int gg_gg = 0; gg_gg < CP; gg_gg++)
 	{
 		outV_vect[gg_gg] = inV_vect[gg_gg];
 		outR_vect[gg_gg] = inR_vect[gg_gg];
+		leftE[gg_gg] = false;
 	}
 
 	//calc particles
 	
 	for (int i = 0; i < N; i++)
 	{
+		//////////////
+		//continue;/////TURN OFF CALC
+		//////////////
 		std::cout << i << '\n';
 		for (int gg2 = 0; gg2 < CP; gg2++) 
 		{
+			//////// turn on if no need B
+			if ((outR_vect[gg2].z) > L)
+				continue;
+			///////////
+			//here we can exept particles///////////////////////////
+			//if 
+			bool ccc0 = (outR_vect[gg2].y > intersection(outR_vect[gg2].z));
+			bool ccc1 = ((PIFAGOR(outR_vect[gg2].y - Width-R0, outR_vect[gg2].z - L) < (R0 - Width)));
+			bool ccc2 = ((PIFAGOR(outR_vect[gg2].y + Width-R0, outR_vect[gg2].z - L) > (R0 + Width)));
+			bool ccc =  (ccc1||ccc2);
+			if (ccc0 || ccc)
+			continue;	
+			
+			//
+			////////////////////////////////////////////////////////
 			vec3d temp(0, 0, 0);
 			for (int p = 0; p < CP; p++) 
 			{
@@ -253,30 +307,42 @@ int main()
 
 			if (outR_vect[gg2].z <= L) // electric field
 			{
-				p_frc[gg2] = temp + ((_q[gg2]) * E);
-				outV_vect[gg2] = outV_vect[gg2] + (1. / m)*dT*p_frc[gg2];
+				
+				p_frc[gg2] = temp + ((_q[gg2]) * E) ;
+				outV_vect[gg2] = outV_vect[gg2] + (1. / _m[gg2])*dT*p_frc[gg2];
 				outR_vect[gg2] = outR_vect[gg2] + (dT * outV_vect[gg2]);// +(1. / m) *(dT*dT / 2)*(p_frc[gg2]);
 				
+				FinRx << outR_vect[gg2].x << " ";
+				FinRx << outR_vect[gg2].y << " ";
+			    FinRx << outR_vect[gg2].z << "\n";
 
-				//FinRx << outR_vect[gg2].x << " ";
-				//FinRx << outR_vect[gg2].y << " ";
-			   // FinRx << outR_vect[gg2].z << "\n";
-
-				FinVx << outV_vect[gg2].x << " ";
-				FinVx << outV_vect[gg2].y << " ";
-				FinVx << outV_vect[gg2].z << "\n";
-
-				if (i == N - 1)
-				{
-
-				}
+				//FinVx << outV_vect[gg2].x << " ";
+				//FinVx << outV_vect[gg2].y << " ";
+				//FinVx << outV_vect[gg2].z << "\n";
 			}
+			
+			
 
 			// magnetic field
 			if ((outR_vect[gg2].z) > L)
-			{
-				p_frc[gg2] = temp + _q[gg2] * (outV_vect[gg2] % B);
-				outV_vect[gg2] = outV_vect[gg2] + (1. / m) * (dT * p_frc[gg2]);
+			{ 
+				
+				if (!leftE[gg2])
+				{
+
+					//FinVx << outR_vect[gg2].x / outR_vect[gg2].z << " ";
+					//FinVx << outR_vect[gg2].x << " ";
+					//FinVx << 0 << "\n";
+					//leftE[gg2] = true;
+
+					//FinRx << outR_vect[gg2].x << " ";
+					//FinRx << outR_vect[gg2].y << " ";
+					//FinRx << outR_vect[gg2].z << "\n";
+				}
+
+
+				p_frc[gg2] = temp + _q[gg2] * (outV_vect[gg2] % B);// -((_m[gg2] / R0)* outV_vect[gg2]);
+				outV_vect[gg2] = outV_vect[gg2] + (1. / _m[gg2]) * (dT * p_frc[gg2]);
 				outR_vect[gg2] = outR_vect[gg2] + (dT * outV_vect[gg2]);// +(1. / m) * (dT*dT / 2)*(p_frc[gg2]);
 				
 
@@ -289,13 +355,13 @@ int main()
 				//				FinVx << inV_vect[gg2].y << " ";
 				//				FinVx << inV_vect[gg2].z << "\n";
 
-				//FinRx << outR_vect[gg2].x << " ";
-				//FinRx << outR_vect[gg2].y << " ";
-				//FinRx << outR_vect[gg2].z << "\n";
+				FinRx << outR_vect[gg2].x << " ";
+				FinRx << outR_vect[gg2].y << " ";
+				FinRx << outR_vect[gg2].z << "\n";
 
-				FinVx << outV_vect[gg2].x << " ";
-		    	FinVx << outV_vect[gg2].y << " ";
-				FinVx << outV_vect[gg2].z << "\n";
+				//FinVx << outV_vect[gg2].x << " ";
+		    	//FinVx << outV_vect[gg2].y << " ";
+				//FinVx << outV_vect[gg2].z << "\n";
 			}
 
 		}
@@ -304,29 +370,55 @@ int main()
 
 	for (int gg22 = 0; gg22 < CP; gg22++)
 	{
-		FoutRx << outR_vect[gg22].x << " ";
-		FoutRx << outR_vect[gg22].y << " ";
-		FoutRx << outR_vect[gg22].z << "\n";
+		//FoutRx << outR_vect[gg22].x << " ";
+		//FoutRx << outR_vect[gg22].y << " ";
+		//FoutRx << outR_vect[gg22].z << "\n";
+
+		//FoutVx << outR_vect[gg22].x<< " ";
+		//FoutVx << outV_vect[gg22].x / outV_vect[gg22].z << " ";		
+		//FoutVx << 0 << "\n";
+
+		FinVx << outR_vect[gg22].y << " ";
+		
+		FinVx << outV_vect[gg22].y / outV_vect[gg22].z << " ";	
+		//FinVx << (outV_vect[gg22].y* outV_vect[gg22].z) / ((outV_vect[gg22].y * outV_vect[gg22].y) + (outV_vect[gg22].z * outV_vect[gg22].z)) << " ";
+	    FinVx << 0 << "\n";
+
+		//FoutVx << outV_vect[gg22].x << " ";
+		//FoutVx << outV_vect[gg22].y << " ";		
+		//FoutVx << outV_vect[gg22].z << "\n";
 	}
 
 	FinRx.close();
 	FinVx.close();
 	FoutRx.close();
 	FoutVx.close();
-	Gnuplot gp1;
-	gp1.cmd( "set xrange[0:30]");
-	gp1.cmd("set yrange[0:30]");
-	gp1.cmd("set zrange[0:30]");
+	/*Gnuplot gp1;
+	gp1.cmd( "set xrange[0:10]");
+	gp1.cmd("set yrange[0:10]");
+	gp1.cmd("set zrange[0:10]");
 	gp1.cmd("splot 'inRx1.txt' with dots");
 
-	Gnuplot gp2;
+	//Gnuplot gp2;
 	//gp2.cmd("set xrange[0:30]");
 	//gp2.cmd("set yrange[0:30]");
 	//gp2.cmd("set zrange[0:30]");
-	gp2.cmd("splot 'outRx1.txt' with dots");
+	//gp2.cmd("splot 'outRx1.txt' with dots");
 
 	//Gnuplot gp3;
 	//gp3.cmd("splot 'inVx1.txt' with dots");
+
+	Gnuplot gp3;
+	gp3.cmd("set xrange[-1:1]");
+	gp3.cmd("set yrange[-1:1]");
+	gp3.cmd("set zrange[-1:1]");
+	gp3.cmd("splot 'inVx1.txt' with dots");
+
+	Gnuplot gp4;
+	gp4.cmd("set xrange[-1:1]");
+	gp4.cmd("set yrange[-1:1]");
+	gp4.cmd("set zrange[-1:1]");
+	gp4.cmd("splot 'outVx1.txt' with dots");*/
 
 	getchar();
 	return 0;
